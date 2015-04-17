@@ -5,7 +5,8 @@ describe DiffHelper do
 
   let(:project) { create(:project) }
   let(:commit) { project.commit(sample_commit.id) }
-  let(:diff) { commit.diffs.first }
+  let(:diffs) { commit.diffs }
+  let(:diff) { diffs.first }
   let(:diff_file) { Gitlab::Diff::File.new(diff) }
 
   describe 'diff_hard_limit_enabled?' do
@@ -28,6 +29,26 @@ describe DiffHelper do
     it 'should return safe limit for a diff if force diff is false' do
       expect(allowed_diff_size).to eq(100)
     end
+  end
+
+  describe 'allowed_diff_lines' do
+    it 'should return hard limit for number of lines in a diff if force diff is true' do
+      allow(controller).to receive(:params) { { force_show_diff: true } }
+      expect(allowed_diff_lines).to eq(50000)
+    end
+
+    it 'should return safe limit for numbers of lines a diff if force diff is false' do
+      expect(allowed_diff_lines).to eq(5000)
+    end
+  end
+
+  describe 'safe_diff_files' do
+    it 'should return all files from a commit that is smaller than safe limits' do
+      expect(safe_diff_files(diffs).length).to eq(2)
+    end
+
+    #unfortunately the testme repo does not yet have a commit larger than 100 files or 5000 lines
+    #to test that only the safe part of the large commit is returned.
   end
 
   describe 'parallel_diff' do
